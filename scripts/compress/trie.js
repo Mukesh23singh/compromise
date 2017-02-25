@@ -1,3 +1,7 @@
+'use strict';
+
+var ptrie = require('./ptrie');
+var Histogram = require('./histogram');
 
 /*
   org.startpad.trie - A JavaScript implementation of a Trie search datastructure.
@@ -31,13 +35,6 @@
       '_v': Visited in DFS.
       '_g': For singleton nodes, the name of it's single property.
  */
-var ptrie = require('./ptrie'); //namespace.lookup('org.startpad.trie.packed');
-
-// ns.extend({
-//   'Trie': Trie,
-//   'Histogram': Histogram
-// });
-
 
 /* Sort elements and remove duplicates from array (modified in place) */
 const unique = function(a) {
@@ -48,6 +45,13 @@ const unique = function(a) {
     }
   }
 };
+const commonPrefix = function(w1, w2) {
+  var maxlen = Math.min(w1.length, w2.length);
+  for (var i = 0; i < maxlen && w1[i] === w2[i]; i++) {
+  }
+  return w1.slice(0, i);
+};
+
 
 // Create a Trie data structure for searching for membership of strings
 // in a dictionary in a very space efficient way.
@@ -99,16 +103,16 @@ class Trie {
 
   _insert(word, node) {
     var prefix,
-      next,
-      prop;
+      next;
 
     // Duplicate word entry - ignore
     if (word.length === 0) {
       return;
     }
-
     // Do any existing props share a common prefix?
-    for (prop in node) {
+    var keys = Object.keys(node);
+    for(let i = 0; i < keys.length; i++) {
+      var prop = node[keys[i]];
       prefix = commonPrefix(word, prop);
       if (prefix.length === 0) {
         continue;
@@ -220,6 +224,7 @@ class Trie {
       return true;
     }
     node._v = this.vCur;
+    return false;
   }
 
   countDegree(node) {
@@ -459,7 +464,6 @@ class Trie {
     this.prepDFS();
     analyzeRefs(this.root);
     symCount = symbolCount();
-    var symDefs = [];
     for (var sym = 0; sym < symCount; sym++) {
       syms[histAbs[sym][0]] = ptrie.toAlphaCode(sym);
     }
@@ -475,60 +479,6 @@ class Trie {
     }
 
     return nodes.join(ptrie.NODE_SEP);
-  }
-}
-
-function commonPrefix(w1, w2) {
-  var maxlen = Math.min(w1.length, w2.length);
-  for (var i = 0; i < maxlen && w1[i] === w2[i]; i++) {
-  }
-  return w1.slice(0, i);
-}
-
-class Histogram {
-  constructor() {
-    this.counts = {};
-  }
-
-  init(sym) {
-    if (this.counts[sym] === undefined) {
-      this.counts[sym] = 0;
-    }
-  }
-
-  add(sym, n) {
-    if (n === undefined) {
-      n = 1;
-    }
-    this.init(sym);
-    this.counts[sym] += n;
-  }
-
-  change(symNew, symOld, n) {
-    if (n === undefined) {
-      n = 1;
-    }
-    this.add(symOld, -n);
-    this.add(symNew, n);
-  }
-
-  countOf(sym) {
-    this.init(sym);
-    return this.counts[sym];
-  }
-
-  highest(top) {
-    var sorted = [];
-    for (var sym in this.counts) {
-      sorted.push([sym, this.counts[sym]]);
-    }
-    sorted.sort(function (a, b) {
-      return b[1] - a[1];
-    });
-    if (top) {
-      sorted = sorted.slice(0, top);
-    }
-    return sorted;
   }
 }
 
