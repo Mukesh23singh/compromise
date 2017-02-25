@@ -45,11 +45,13 @@ const unique = function(a) {
     }
   }
 };
+
 // const commonPrefix = function(w1, w2) {
 //   let maxlen = Math.min(w1.length, w2.length);
 //   for (let i = 0; i < maxlen && w1[i] === w2[i]; i++) {
+//     return w1.slice(0, i);
 //   }
-//   return w1.slice(0, i);
+//   return false;
 // };
 const commonPrefix = function(w1, w2) {
   var len = Math.min(w1.length, w2.length);
@@ -106,7 +108,6 @@ class Trie {
   _insert(word, node) {
     let prefix,
       next;
-
     // Duplicate word entry - ignore
     if (word.length === 0) {
       return;
@@ -114,7 +115,7 @@ class Trie {
     // Do any existing props share a common prefix?
     let keys = Object.keys(node);
     for(let i = 0; i < keys.length; i++) {
-      let prop = node[keys[i]];
+      let prop = keys[i];
       prefix = commonPrefix(word, prop);
       if (prefix.length === 0) {
         continue;
@@ -138,6 +139,7 @@ class Trie {
     }
 
     // No shared prefix.  Enter the word here as a terminal string.
+    console.log('new-word - ' + word);
     this.addTerminal(node, word);
     this.wordCount++;
   }
@@ -175,7 +177,6 @@ class Trie {
   }
 
   optimize() {
-
     this.combineSuffixNode(this.root);
     this.prepDFS();
     this.countDegree(this.root);
@@ -289,7 +290,6 @@ class Trie {
     if (node[word] === 1) {
       return true;
     }
-
     // Find a prefix of word reference to a child
     let props = this.nodeProps(node, true);
     for (let i = 0; i < props.length; i++) {
@@ -298,7 +298,6 @@ class Trie {
         return this.isFragment(word.slice(prop.length), node[prop]);
       }
     }
-
     return false;
   }
 
@@ -484,14 +483,4 @@ class Trie {
   }
 }
 
-
-
-let str = 'cat\nsat\nmat\ngermany\nmatters';
-let trie = new Trie(str);
-// console.log(trie);
-let compressed = trie.pack();
-console.log(compressed);
-
-let p = new PackedTrie(compressed);
-console.log(p.isWord('marm'));
-console.log(p.isWord('germany'));
+module.exports = Trie;
