@@ -1,8 +1,20 @@
+'use strict';
+let types = require('./types');
 
-var types = require('./types');
+let enumBug = !{
+    toString: true
+  }.propertyIsEnumerable('toString');
+
+let internalNames = ['toString', 'toLocaleString', 'valueOf',
+  'constructor', 'isPrototypeOf'];
+
+// Copy methods to a Constructor Function's prototype
+const methods = function(ctor, obj) {
+  extend(ctor.prototype, obj);
+};
 
 // Monkey-patch the Function object if that is your syntactic preference
-function patchFunction() {
+const patchFunction = function() {
   methods(Function, {
     'methods': function(obj) {
       methods(this, obj);
@@ -17,34 +29,22 @@ function patchFunction() {
       return decorate(this, decorator);
     }
   });
-}
-
-var enumBug = !{
-    toString: true
-  }.propertyIsEnumerable('toString');
-var internalNames = ['toString', 'toLocaleString', 'valueOf',
-  'constructor', 'isPrototypeOf'];
-
-// Copy methods to a Constructor Function's prototype
-function methods(ctor, obj) {
-  extend(ctor.prototype, obj);
-}
+};
 
 // Function wrapper for binding 'this'
 // Similar to Protoype.bind - but does no argument mangling
-function bind(fn, self) {
+const bind = function(fn, self) {
   return function() {
     return fn.apply(self, arguments);
   };
-}
+};
 
 // Function wrapper for appending parameters (currying)
 // Similar to Prototype.curry
-function curry(fn) {
-  var presets;
-
+const curry = function(fn) {
+  let presets;
   // Handle the monkey-patched and in-line forms of curry
-  if (arguments.length == 2 && types.isArguments(arguments[1])) {
+  if (arguments.length === 2 && types.isArguments(arguments[1])) {
     presets = copyArray(arguments[2]);
   } else {
     presets = copyArray(arguments);
@@ -53,7 +53,7 @@ function curry(fn) {
   return function() {
     return fn.apply(this, presets.concat(arguments));
   };
-}
+};
 
 // Wrap the fn function with a generic decorator like:
 //
@@ -69,28 +69,25 @@ function curry(fn) {
 // of the decorate function.  In addition to wrapping
 // the decorated function, it can be used to save state
 // information between calls by adding properties to it.
-function decorate(fn, decorator) {
-  var fnWrapper = function() {
+const decorate = function(fn, decorator) {
+  let fnWrapper = function() {
     return decorator.call(this, fn, arguments, fnWrapper);
   };
   // Init call - pass undefined fn - but available in this
   // if needed.
   decorator.call(this, undefined, arguments, fnWrapper);
   return fnWrapper;
-}
+};
 
-function extend(dest, args) {
-  var i,
-    j;
-  var source;
-  var prop;
-
+const extend = function(dest) {
   if (dest === undefined) {
     dest = {};
   }
-  for (i = 1; i < arguments.length; i++) {
-    source = arguments[i];
-    for (prop in source) {
+  for (let i = 1; i < arguments.length; i++) {
+    let source = arguments[i];
+    let keys = Object.keys(source);
+    for(let o = 0; o < keys.length; o++) {
+      let prop = source[keys[o]];
       if (source.hasOwnProperty(prop)) {
         dest[prop] = source[prop];
       }
@@ -98,7 +95,7 @@ function extend(dest, args) {
     if (!enumBug) {
       continue;
     }
-    for (j = 0; j < internalNames.length; j++) {
+    for (let j = 0; j < internalNames.length; j++) {
       prop = internalNames[j];
       if (source.hasOwnProperty(prop)) {
         dest[prop] = source[prop];
@@ -106,8 +103,7 @@ function extend(dest, args) {
     }
   }
   return dest;
-}
-
+};
 
 module.exports = {
   'extend': extend,
