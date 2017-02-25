@@ -46,13 +46,6 @@ const unique = function(a) {
   }
 };
 
-// const commonPrefix = function(w1, w2) {
-//   let maxlen = Math.min(w1.length, w2.length);
-//   for (let i = 0; i < maxlen && w1[i] === w2[i]; i++) {
-//     return w1.slice(0, i);
-//   }
-//   return false;
-// };
 const commonPrefix = function(w1, w2) {
   var len = Math.min(w1.length, w2.length);
   while (len > 0) {
@@ -106,17 +99,11 @@ class Trie {
   }
 
   _insert(word, node) {
-    let prefix,
-      next;
-    // Duplicate word entry - ignore
-    if (word.length === 0) {
-      return;
-    }
     // Do any existing props share a common prefix?
     let keys = Object.keys(node);
     for(let i = 0; i < keys.length; i++) {
       let prop = keys[i];
-      prefix = commonPrefix(word, prop);
+      let prefix = commonPrefix(word, prop);
       if (prefix.length === 0) {
         continue;
       }
@@ -129,7 +116,7 @@ class Trie {
       if (prop === word && typeof node[prop] === 'number') {
         return;
       }
-      next = {};
+      let next = {};
       next[prop.slice(prefix.length)] = node[prop];
       this.addTerminal(next, word = word.slice(prefix.length));
       delete node[prop];

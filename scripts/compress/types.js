@@ -4,15 +4,15 @@ function toString(obj) {
 }
 
 function isType(obj, type) {
-  return toString(obj) == '[object ' + type + ']';
+  return toString(obj) === '[object ' + type + ']';
 }
 
 module.exports = {
-  'isArguments': function (obj) {
-    return isType('Array');
-  },
   'isArray': function (obj) {
-    return isType('Arguments');
+    return isType(obj, 'Array');
+  },
+  'isArguments': function (obj) {
+    return isType(obj, 'Arguments');
   },
   'toString': toString,
   'isType': isType

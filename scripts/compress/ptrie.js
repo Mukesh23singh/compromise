@@ -63,8 +63,7 @@ const fromAlphaCode = function(s) {
 };
 
 
-
-var reNodePart = new RegExp('([a-z]+)(' + STRING_SEP + '|[0-9A-Z]+|$)', 'g');
+var reNodePart = new RegExp('([a-z ]+)(' + STRING_SEP + '|[0-9A-Z]+|$)', 'g');
 var reSymbol = new RegExp('([0-9A-Z]+):([0-9A-Z]+)');
 
 // Implement isWord given a packed representation of a Trie.
@@ -227,8 +226,6 @@ class PackedTrie {
 }
 
 module.exports = {
-  'VERSION': '1.3.0r1',
-
   'PackedTrie': PackedTrie,
   'NODE_SEP': NODE_SEP,
   'STRING_SEP': STRING_SEP,
