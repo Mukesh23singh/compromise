@@ -2,7 +2,7 @@
 
 let ptrie = require('./ptrie');
 let Histogram = require('./histogram');
-let PackedTrie = ptrie.PackedTrie;
+// let PackedTrie = ptrie.PackedTrie;
 /*
   org.startpad.trie - A JavaScript implementation of a Trie search datastructure.
 
@@ -139,7 +139,6 @@ class Trie {
     }
 
     // No shared prefix.  Enter the word here as a terminal string.
-    console.log('new-word - ' + word);
     this.addTerminal(node, word);
     this.wordCount++;
   }
@@ -447,10 +446,10 @@ class Trie {
         savings[sym] = histAbs[sym][1] - defSize -
         histRel.countOf(ptrie.BASE - sym - 1) +
         savings[sym - 1];
-        console.log('savings[' + sym + '] ' + savings[sym] + ' = ' +
-          savings[sym - 1] + ' +' +
-          histAbs[sym][1] + ' - ' + defSize + ' - ' +
-          histRel.countOf(ptrie.BASE - sym - 1) + ')');
+        // console.log('savings[' + sym + '] ' + savings[sym] + ' = ' +
+        //   savings[sym - 1] + ' +' +
+        //   histAbs[sym][1] + ' - ' + defSize + ' - ' +
+        //   histRel.countOf(ptrie.BASE - sym - 1) + ')');
         if (savings[sym] >= best) {
           best = savings[sym];
           symbCount = sym + 1;
