@@ -3,10 +3,9 @@
 // const combine = require('./combine');
 const p = require('../paths');
 const lexicon = p.lexicon;
-const tries = p.tries;
 const getFirstWords = require('./firstWord');
 //build default-one
-const lexiconFirst = getFirstWords([lexicon, tries.multiples()]);
+const lexiconFirst = getFirstWords([lexicon]); //tries.multiples()
 
 //see if this term is a multi-match
 const tryHere = function(ts, i, obj) {

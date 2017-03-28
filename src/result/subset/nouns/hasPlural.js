@@ -1,5 +1,5 @@
 'use strict';
-const uncountables = require('../../../tries').utils.uncountable;
+const uncountables = require('../../../lexicon/data').uncountable;
 
 //certain words can't be plural, like 'peace'
 const hasPlural = function (t) {

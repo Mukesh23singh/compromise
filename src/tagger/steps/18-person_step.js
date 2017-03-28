@@ -2,7 +2,41 @@
 const log = require('../paths').log;
 const path = 'tagger/person_step';
 
-let titles = require('../paths').data.titles;
+//extend to person-names if infront of a name - 'Professor Frink'
+let titles = [
+  'lord',
+  'lady',
+  'king',
+  'queen',
+  'prince',
+  'princess',
+  'dutchess',
+  'president',
+  'excellency',
+  'professor',
+  'chancellor',
+  'father',
+  'pastor',
+  'brother',
+  'sister',
+  'doctor',
+  'captain',
+  'commander',
+  'general',
+  'lieutenant',
+  'reverend',
+  'rabbi',
+  'ayatullah',
+  'councillor',
+  'secretary',
+  'sultan',
+  'mayor',
+  'congressman',
+  'congresswoman',
+// 'his honorable',
+// 'her honorable',
+// 'the honorable',
+];
 titles = titles.reduce((h, str) => {
   h[str] = true;
   return h;

@@ -3,8 +3,8 @@
 // @spencermountain 2015 MIT
 'use strict';
 const fns = require('./paths').fns;
-const data = require('../data/index');
-const abbreviations = Object.keys(data.abbreviations);
+const data = require('../lexicon/data');
+const abbreviations = Object.keys(data.Abbreviation || {});
 
 const naiive_split = function (text) {
   //first, split by newline

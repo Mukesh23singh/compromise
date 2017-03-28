@@ -1,5 +1,5 @@
 'use strict';
-const irregulars = require('../../../../data').irregular_plurals.toSingle;
+const irregulars = require('../../../../lexicon/data').Singular;
 const singleRules = require('./data/singleRules');
 
 //turn 'shoes' into 'shoe'

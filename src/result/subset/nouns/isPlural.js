@@ -1,5 +1,5 @@
 'use strict';
-const irregulars = require('../../../data').irregular_plurals;
+const irregulars = require('./methods/data/irregulars');
 const rules = require('./methods/data/indicators');
 
 const knownPlural = {

@@ -1,7 +1,7 @@
 'use strict';
 const toNumber = require('../toNumber');
 const toText = require('../toText');
-const ordinalWord = require('../../../paths').data.ordinalMap.toOrdinal;
+const ordinalWord = require('../../../paths').data.Ordinal;
 //
 const textOrdinal = (ts) => {
   let num = toNumber(ts);
