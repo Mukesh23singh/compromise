@@ -1,8 +1,7 @@
 'use strict';
 const p = require('../paths');
 const split = require('../contraction/split');
-const tries = require('../../tries');
-const lexicon = p.lexicon;
+const lexicon = require('../../lexicon');
 const log = p.log;
 const path = 'tagger/lexicon';
 
@@ -14,10 +13,6 @@ const check_lexicon = (str, sentence) => {
   }
   if (lexicon[str]) {
     return lexicon[str];
-  }
-  let tag = tries.lookup(str);
-  if (tag) {
-    return tag;
   }
   return null;
 };

@@ -1,6 +1,6 @@
 'use strict';
 const log = require('../paths').log;
-const phrasals = require('../paths').tries.utils.phrasals;
+const phrasals = require('../paths').data.Phrasals;
 const toInfinitive = require('../../result/subset/verbs/methods/toInfinitive/index.js');
 const path = 'tagger/phrasal';
 
