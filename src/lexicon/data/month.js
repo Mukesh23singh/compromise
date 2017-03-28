@@ -1,0 +1,23 @@
+module.exports = [
+  "apr",
+  "april",
+  "aug",
+  "august",
+  "dec",
+  "december",
+  "feb",
+  "february",
+  "january",
+  "jul",
+  "july",
+  "jun",
+  "june",
+  "mar",
+  "nov",
+  "november",
+  "oct",
+  "october",
+  "sep",
+  "sept",
+  "september"
+]

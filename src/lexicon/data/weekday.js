@@ -1,0 +1,22 @@
+module.exports = [
+  "fri",
+  "friday",
+  "fridays",
+  "mon",
+  "monday",
+  "mondays",
+  "saturday",
+  "saturdays",
+  "sun",
+  "sunday",
+  "sundays",
+  "thurs",
+  "thursday",
+  "thursdays",
+  "tues",
+  "tuesday",
+  "tuesdays",
+  "wed",
+  "wednesday",
+  "wednesdays"
+]

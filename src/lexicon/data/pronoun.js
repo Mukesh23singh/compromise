@@ -1,0 +1,21 @@
+module.exports = [
+  "'em",
+  "elle",
+  "he",
+  "he's",
+  "him",
+  "i",
+  "il",
+  "it",
+  "me",
+  "ourselves",
+  "she",
+  "she's",
+  "them",
+  "they",
+  "thou",
+  "us",
+  "we",
+  "you",
+  "yourself"
+]

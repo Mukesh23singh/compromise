@@ -1,0 +1,21 @@
+module.exports = [
+  "although",
+  "and",
+  "because",
+  "before",
+  "but",
+  "cuz",
+  "for",
+  "how",
+  "however",
+  "nor",
+  "or",
+  "otherwise",
+  "plus",
+  "therefore",
+  "tho",
+  "though",
+  "whether",
+  "while",
+  "yet"
+]

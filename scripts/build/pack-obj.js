@@ -1,7 +1,7 @@
 'use strict';
 require('shelljs/global');
 const efrt = require('efrt');
-const lexicon = require('../../src/data/lexicon');
+const lexicon = require('../../src/lexicon/index');
 
 let pivot = {};
 

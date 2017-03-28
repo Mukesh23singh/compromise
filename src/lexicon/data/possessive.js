@@ -1,0 +1,22 @@
+module.exports = [
+  "anyone",
+  "anything",
+  "her",
+  "hers",
+  "herself",
+  "himself",
+  "his",
+  "its",
+  "mine",
+  "my",
+  "myself",
+  "none",
+  "our",
+  "ours",
+  "something",
+  "their",
+  "theirs",
+  "themselves",
+  "your",
+  "yours"
+]

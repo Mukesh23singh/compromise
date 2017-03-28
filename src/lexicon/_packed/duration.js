@@ -1,0 +1,1 @@
+module.exports="centur4d2hour3m0seconds,week3year3;i0onth2;llisecond1nute1;ay0ecade0;!s;ies,y"

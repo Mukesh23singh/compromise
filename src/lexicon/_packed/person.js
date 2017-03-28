@@ -1,0 +1,1 @@
+module.exports="aunt,bAcousin,d8fa7g4m1s0uncle,wo6;istBomeone,tep4;an,o0;m0th9;!my;entle1irl,rand0uy;fa1mo1;man;th4;ad0ude;!dy;oy,ro0;!th0;er"

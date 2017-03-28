@@ -1,0 +1,1 @@
+module.exports="a7breakfast 6dinner6e4lunch6m2n0oclock,some6;i2o0;on,w;idni0or2;ght;od,ve0;ning;time;fternoon,go"

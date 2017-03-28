@@ -1,0 +1,1 @@
+module.exports="c5lets,m4ought3sh1w0;ill,o5;a0o4;ll,nt;! to;ay,ight,ust;an,o0;uld"
