@@ -2,7 +2,6 @@ node_modules/
 coverage/
 scripts/bower/bower-*
 bower_components/
-tmp/
 viz/
 
 .DS_Store
