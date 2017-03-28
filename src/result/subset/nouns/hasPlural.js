@@ -1,6 +1,6 @@
 'use strict';
 const uncountables = require('../../../lexicon/data').uncountable;
-
+console.log(uncountables);
 //certain words can't be plural, like 'peace'
 const hasPlural = function (t) {
   //end quick
@@ -27,7 +27,7 @@ const hasPlural = function (t) {
     }
   }
   //terms known as un-inflectable, like 'peace'
-  if (uncountables.has(t.normal)) {
+  if (uncountables[t.normal]) {
     return false;
   }
   return true;

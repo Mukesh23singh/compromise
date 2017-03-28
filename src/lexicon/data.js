@@ -33,6 +33,7 @@ const data = {
   'PastTense': require('./_packed/pasttense'),
   'Person': require('./_packed/person'),
   'Place': require('./_packed/place'),
+  'PhrasalVerb': require('./_packed/phrasalverb'),
   'Plural': require('./_packed/plural'),
   'Possessive': require('./_packed/possessive'),
   'Preposition': require('./_packed/preposition'),

@@ -18,7 +18,7 @@ nlp.version = pkg.version;
 
 //so handy at times
 nlp.lexicon = function() {
-  return require('./data/lexicon');
+  return require('./lexicon/data');
 };
 
 //also this is much handy
