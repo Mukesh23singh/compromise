@@ -1,0 +1,115 @@
+// Walk the trailing punctuation run once, rather than retrying at every offset.
+const endPunctuation = /[,:;)\]*.?~!\u0022\uFF02\u201D\u2019\u00BB\u203A\u2032\u2033\u2034\u301E\u00B4—-]/
+const trimEnd = str => {
+  let end = str.length
+  while (end > 0 && endPunctuation.test(str[end - 1])) end--
+  return str.slice(0, end)
+}
+const trimStart =
+  /^[(['"*~\uFF02\u201C\u2018\u201F\u201B\u201E\u2E42\u201A\u00AB\u2039\u2035\u2036\u2037\u301D\u0060\u301F]+/
+
+const punctToKill = /[,:;)('"\uFF02\u201D\u2019\u00BB\u203A\u2032\u2033\u2034\u301E\u00B4\]]/
+const isHyphen = /^[-–—]$/
+const hasSpace = / /
+
+// the original text of these terms, with any outer whitespace removed
+const rawText = terms => terms.reduce((str, t) => str + t.pre + t.text + t.post, '').trim()
+
+const textFromTerms = function (terms, opts, keepSpace = true) {
+  let txt = ''
+  terms.forEach((t, i) => {
+    let pre = t.pre || ''
+    let post = t.post || ''
+    if (opts.punctuation === 'some') {
+      pre = pre.replace(/[,،]/g, '')
+      pre = pre.replace(trimStart, '')
+      // replace a hyphen with a space
+      if (isHyphen.test(post)) {
+        post = ' '
+      }
+      post = post.replace(punctToKill, '')
+      // cleanup exclamations
+      post = post.replace(/\?!+/, '?')
+      post = post.replace(/!+/, '!')
+      post = post.replace(/\?+/, '?')
+      // kill elipses
+      post = post.replace(/[,،…]|\.{2,}/g, '')
+      // kill abbreviation periods
+      if (t.tags.has('Abbreviation')) {
+        post = post.replace(/\./, '')
+      }
+    }
+    if (opts.whitespace === 'some') {
+      pre = pre.replace(/\s/, '') //remove pre-whitespace
+      post = post.replace(/\s+/, ' ') //replace post-whitespace with a space
+    }
+    if (!opts.keepPunct) {
+      pre = pre.replace(trimStart, '')
+      if (post === '-') {
+        post = ' '
+      } else {
+        post = trimEnd(post)
+      }
+    }
+    // grab the correct word format
+    let word = t[opts.form || 'text'] || t.normal || ''
+    if (opts.form === 'implicit') {
+      word = t.implicit || t.text
+    }
+    if (opts.form === 'root' && t.implicit) {
+      word = t.root || t.implicit || t.normal
+    }
+    // add an implicit space, for contractions - but not after the last word
+    if ((opts.form === 'machine' || opts.form === 'implicit' || opts.form === 'root') && t.implicit && i < terms.length - 1) {
+      if (!post || !hasSpace.test(post)) {
+        post += ' '
+      }
+    }
+    txt += pre + word + post
+  })
+  if (keepSpace === false) {
+    txt = txt.trim()
+  }
+  if (opts.lowerCase === true) {
+    txt = txt.toLowerCase()
+  }
+  return txt
+}
+
+const textFromDoc = function (docs, opts) {
+  let text = ''
+  if (!docs || !docs[0] || !docs[0][0]) {
+    return text
+  }
+  for (let i = 0; i < docs.length; i += 1) {
+    // middle
+    text += textFromTerms(docs[i], opts, true)
+  }
+  if (!opts.keepSpace) {
+    text = text.trim()
+  }
+  if (opts.keepEndPunct === false) {
+    // don't remove ':)' etc
+    if (!docs[0][0].tags.has('Emoticon')) {
+      text = text.replace(trimStart, '')
+    }
+    // remove ending periods
+    const last = docs.at(-1)
+    if (!last.at(-1).tags.has('Emoticon')) {
+      text = trimEnd(text)
+      // removing a spaced dash leaves its space behind
+      if (!opts.keepSpace) {
+        text = text.trimEnd()
+      }
+    }
+    // kill end quotations
+    if (text.endsWith(`'`) && !text.endsWith(`s'`)) {
+      text = text.replace(/'/, '')
+    }
+  }
+  if (opts.cleanWhitespace === true) {
+    text = text.trim()
+  }
+  return text
+}
+export { textFromDoc, textFromTerms, rawText }

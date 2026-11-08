@@ -1,0 +1,83 @@
+{
+  "name": "compromise-speed",
+  "version": "0.2.0",
+  "description": "Streaming, parallel parsing, and performance helpers for compromise",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spencermountain/compromise.git",
+    "directory": "plugins/speed"
+  },
+  "homepage": "https://github.com/spencermountain/compromise/tree/master/plugins/speed",
+  "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "browser": {
+        "import": {
+          "types": "./types/browser.d.ts",
+          "default": "./src/browser.js"
+        },
+        "require": {
+          "types": "./types/browser.d.cts",
+          "default": "./builds/compromise-speed.browser.cjs"
+        }
+      },
+      "import": {
+        "types": "./types/index.d.ts",
+        "default": "./src/plugin.js"
+      },
+      "require": {
+        "types": "./types/index.d.cts",
+        "default": "./builds/compromise-speed.cjs"
+      }
+    },
+    "./browser": {
+      "import": {
+        "types": "./types/browser.d.ts",
+        "default": "./src/browser.js"
+      },
+      "require": {
+        "types": "./types/browser.d.cts",
+        "default": "./builds/compromise-speed.browser.cjs"
+      }
+    }
+  },
+  "main": "./builds/compromise-speed.cjs",
+  "module": "./builds/compromise-speed.mjs",
+  "types": "./types/index.d.cts",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "tape \"./tests/**/*.test.js\" | tap-dancer --color always",
+    "testb": "cross-env TESTENV=prod tape \"./tests/**/*.test.js\" | tap-dancer --color always",
+    "watch": "node ./scratch.js",
+    "version": "node ./scripts/version.js",
+    "build": "node ./scripts/version.js && rollup -c --silent"
+  },
+  "files": [
+    "browser/",
+    "types/",
+    "builds/",
+    "src/"
+  ],
+  "devDependencies": {
+    "nlp-corpus": "catalog:",
+    "@rollup/plugin-node-resolve": "catalog:",
+    "@rollup/plugin-terser": "catalog:",
+    "rollup": "catalog:",
+    "rollup-plugin-filesize-check": "catalog:",
+    "tape": "catalog:",
+    "cross-env": "catalog:",
+    "tap-dancer": "catalog:"
+  },
+  "peerDependencies": {
+    "compromise": "workspace:^"
+  },
+  "unpkg": "./builds/compromise-speed.browser.min.js",
+  "dependencies": {
+    "@types/node": "catalog:"
+  }
+}

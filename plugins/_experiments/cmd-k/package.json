@@ -1,0 +1,39 @@
+{
+  "name": "compromise-cmd-k",
+  "version": "0.0.1",
+  "description": "plugin for nlp-compromise",
+  "license": "MIT",
+  "repository": "github:spencermountain/compromise",
+  "homepage": "https://github.com/spencermountain/compromise/tree/master/plugins/dates",
+  "author": "Spencer Kelly <spencermountain@gmail.com> (https://spencermountain.dev)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/plugin.js",
+      "require": "./builds/compromise-cmd-k.cjs",
+      "types": "./index.d.ts"
+    }
+  },
+  "main": "./src/plugin.js",
+  "module": "./builds/compromise-cmd-k.mjs",
+  "types": "./index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "test": "tape \"./tests/**/*.test.js\" | tap-dancer  --color always",
+    "testb": "TESTENV=prod tape \"./tests/**/*.test.js\" | tap-dancer  --color always",
+    "watch": "node --watch ./scratch.js",
+    "perf": "node ./scripts/perf.js",
+    "version": "node ./scripts/version.js",
+    "build": "node ./scripts/version.js && rollup -c --silent"
+  },
+  "files": [
+    "index.d.ts",
+    "builds/",
+    "src/"
+  ],
+  "dependencies": {},
+  "peerDependencies": {
+    "compromise": ">=14.2.0"
+  },
+  "unpkg": "./builds/compromise-cmd-k.min.js"
+}

@@ -1,55 +1,60 @@
-name: Build and test
+name: Pull request
 
-on: [pull_request]
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
-
-    env:
-      CI: true
-
-    strategy:
-      matrix:
-        node-version: [10.x, 15.x]
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: use node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          node-version: ${{ matrix.node-version }}
+          persist-credentials: false
 
-      - name: cache dependencies
-        uses: actions/cache@v1
+      - name: Set up pnpm
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-${{ matrix.node-version }}-
-            ${{ runner.os }}-npm-
+          install: false
 
-      - name: install
-        run: |
-          npm ci
-          npm i --no-save ts-node typescript
-          npm run plugins:ci
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: pnpm
 
-      - name: static checks
-        run: |
-          npm i --no-save eslint 
-          npm run lint
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: build
-        run: |
-          npm run build
-          npm run plugins:build
+      - name: Test TypeScript declarations
+        run: pnpm test:types
 
-      - name: test
+      - name: Lint and test source
         run: |
-          npm run test:smoke
-          npm run testb
-          # npm run perf
-          npm run test:types
-          # npm run test:stress
+          pnpm lint
+          pnpm test
+          pnpm test:plugins
+
+      - name: Build and test packages
+        run: |
+          pnpm build
+          pnpm build:plugins
+          pnpm testb
+          pnpm testb:plugins
+
+      - name: Set up minimum supported Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 18.0.0
+
+      - name: Test source and builds on Node.js 18
+        run: node scripts/test/runtime.js

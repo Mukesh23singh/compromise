@@ -1,0 +1,53 @@
+import swapVerb from './swap-verb.js'
+
+const swapNoun = function (m, lemma) {
+  let str = lemma
+  if (m.has('#Plur')) {
+    const toPlural = m.methods.two.transform.noun.toPlural
+    str = toPlural(lemma, m.model)
+  }
+  m.replaceWith(str, { possessives: true })
+}
+
+const swapAdverb = function (m, lemma) {
+  const { toAdverb } = m.methods.two.transform.adjective
+  const adv = toAdverb(lemma)
+  if (adv) {
+    m.replaceWith(adv)
+  }
+}
+const swapAdjective = function (m, lemma) {
+  const { toComparative, toSuperlative } = m.methods.two.transform.adjective
+  let str = lemma
+  if (m.has('#Comp')) {
+    str = toComparative(str, m.model)
+  } else if (m.has('#Sup')) {
+    str = toSuperlative(str, m.model)
+  }
+  if (str) {
+    m.replaceWith(str)
+  }
+}
+
+const swap = function (from, to, tag) {
+  const reg = from.split(/ /g).map(str => str.toLowerCase().trim()).filter(str => str).map(str => `{${str}}`).join(' ')
+  let m = this.match(reg)
+  // guard against some homonyms
+  if (tag) {
+    m = m.if(tag)
+  }
+  if (m.has('#Verb')) {
+    return swapVerb(m, to)
+  }
+  if (m.has('#NN')) {
+    return swapNoun(m, to)
+  }
+  if (m.has('#Adv')) {
+    return swapAdverb(m, to)
+  }
+  if (m.has('#Adj')) {
+    return swapAdjective(m, to)
+  }
+  return this
+}
+export default swap

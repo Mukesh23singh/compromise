@@ -1,0 +1,117 @@
+import Unit from './Unit.js'
+
+// a specific month, like 'March'
+class AnyMonth extends Unit {
+  constructor(input, unit, context) {
+    super(input, unit, context)
+    this.unit = 'month'
+    // set to beginning
+    if (this.d.isValid()) {
+      this.d = this.d.startOf(this.unit)
+    }
+  }
+}
+
+// a specific month, like 'March'
+class Month extends Unit {
+  constructor(input, unit, context) {
+    super(input, unit, context)
+    this.unit = 'month'
+    // set to beginning
+    if (this.d.isValid()) {
+      this.d = this.d.startOf(this.unit)
+    }
+  }
+  next() {
+    this.d = this.d.add(1, 'year')
+    this.d = this.d.startOf('month')
+    return this
+  }
+  last() {
+    this.d = this.d.minus(1, 'year')
+    this.d = this.d.startOf('month')
+    return this
+  }
+  middle() {
+    const half = Math.floor(this.d.daysInMonth() / 2)
+    this.d = this.d.add(half, 'days')
+    this.d = this.d.startOf('day')
+    return this
+  }
+}
+
+class AnyQuarter extends Unit {
+  constructor(input, unit, context) {
+    super(input, unit, context)
+    this.unit = 'quarter'
+    // set to beginning
+    if (this.d.isValid()) {
+      this.d = this.d.startOf(this.unit)
+    }
+  }
+}
+
+class Quarter extends Unit {
+  constructor(input, unit, context) {
+    super(input, unit, context)
+    this.unit = 'quarter'
+    // set to beginning
+    if (this.d.isValid()) {
+      this.d = this.d.startOf(this.unit)
+    }
+  }
+  next() {
+    this.d = this.d.add(1, 'year')
+    this.d = this.d.startOf(this.unit)
+    return this
+  }
+  last() {
+    this.d = this.d.minus(1, 'year')
+    this.d = this.d.startOf(this.unit)
+    return this
+  }
+}
+class Season extends Unit {
+  constructor(input, unit, context) {
+    super(input, unit, context)
+    this.unit = 'season'
+    // set to beginning
+    if (this.d.isValid()) {
+      this.d = this.d.startOf(this.unit)
+    }
+  }
+  // spacetime's endOf('season') stops a month early - a season is three months
+  end() {
+    const last = new Month(this.d.startOf(this.unit).add(2, 'months'), null, this.context)
+    this.d = last.end().d // respects a custom dayEnd
+    return this
+  }
+  next() {
+    this.d = this.d.add(1, 'year')
+    this.d = this.d.startOf(this.unit)
+    return this
+  }
+  last() {
+    this.d = this.d.minus(1, 'year')
+    this.d = this.d.startOf(this.unit)
+    return this
+  }
+}
+class Year extends Unit {
+  constructor(input, unit, context) {
+    super(input, unit, context)
+    this.unit = 'year'
+    if (this.d.isValid()) {
+      this.d = this.d.startOf('year')
+    }
+  }
+}
+
+export {
+  AnyMonth,
+  Month,
+  Quarter,
+  AnyQuarter,
+  Season,
+  Year
+}

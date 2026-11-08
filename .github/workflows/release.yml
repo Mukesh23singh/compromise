@@ -1,67 +1,51 @@
-name: Release
+name: Publish to npm
 
 on:
   release:
-    types: [created]
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
-    env:
-      CI: true
-
-    # Note that these steps are *identical* to build-and-test (with the caveat
-    # that build-and-test uses several versions of Node, and Release only uses
-    # 10.x) at least until the actual publishing happens.  Ideally, we could
-    # delegate to the build- and-test workflow, but I haven't found a way to do
-    # that yet.
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-node@v1
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          node-version: 10.x
+          persist-credentials: false
 
-      - name: cache dependencies
-        uses: actions/cache@v1
+      - name: Set up pnpm
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-10.x-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-10.x-
-            ${{ runner.os }}-npm-
+          install: false
 
-      - name: install
-        run: |
-          npm ci
-          npm i --no-save ts-node typescript
-          npm run plugins:ci
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
 
-      - name: static checks
-        run: |
-          npm i --no-save eslint
-          npm run lint
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: build
+      - name: Verify package
         run: |
-          npm run build
-          npm run plugins:build
+          pnpm lint
+          pnpm test
+          pnpm build
+          pnpm testb
 
-      - name: test
-        run: |
-          npm run test:smoke
-          npm run testb
-          # npm run perf
-          npm run test:types
-          # npm run test:stress
-
-      # And finally... publish it!  Note that we create the .npmrc file
-      # "just in time" so that `npm publish` can get the auth token from the
-      # environment
-      - name: publish
-        run: |
-          echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > .npmrc
-          npm publish
+      - name: Publish package
+        run: pnpm publish --access public --provenance --no-git-checks
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

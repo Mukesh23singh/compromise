@@ -1,76 +1,34 @@
-import commonjs from '@rollup/plugin-commonjs'
-import json from '@rollup/plugin-json'
-import resolve from '@rollup/plugin-node-resolve'
-import { terser } from 'rollup-plugin-terser'
-import babel from 'rollup-plugin-babel'
+import terser from '@rollup/plugin-terser'
 import sizeCheck from 'rollup-plugin-filesize-check'
-const name = 'compromise-paragraphs'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
 
-import { version } from './package.json'
-const banner = `/* ${name} ${version} MIT */`
-
-export default [
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.mjs`,
-        format: 'esm',
-        banner: banner,
-      },
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      sizeCheck(),
-    ],
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.js`,
-        format: 'umd',
-        sourcemap: true,
-        name: 'compromiseParagraphs',
-        banner: banner,
-      },
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      sizeCheck(),
-    ],
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.min.js`,
-        format: 'umd',
-        name: 'compromiseParagraphs',
-      },
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      terser(),
-      sizeCheck(),
-    ],
-  },
-]
+export default {
+  input: 'src/plugin.js',
+  plugins: [nodeResolve()],
+  output: [
+    {
+      file: 'builds/compromise-paragraphs.cjs',
+      format: 'umd',
+      name: 'compromiseParagraphs',
+      plugins: [],
+    },
+    {
+      file: 'builds/compromise-paragraphs.min.js',
+      format: 'umd',
+      name: 'compromiseParagraphs',
+      plugins: [
+        terser({ keep_classnames: true }),
+        sizeCheck({
+          expect: 2,
+          warn: 5, // acceptable (+/-)
+          throw: 10, // unacceptable (+/-)
+        }),
+      ],
+    },
+    {
+      file: 'builds/compromise-paragraphs.mjs',
+      format: 'esm',
+      plugins: [terser({ keep_classnames: true })],
+    },
+  ],
+}

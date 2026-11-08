@@ -1,0 +1,141 @@
+
+const concatArr = function (views, fn) {
+  const arr = []
+  views.forEach(m => {
+    arr.push(m[fn]())
+  })
+  return arr
+}
+
+const concatDoc = function (paragraphs, cb) {
+  let ptrs = []
+  paragraphs.views.forEach(m => {
+    const res = cb(m)
+    if (res.found) {
+      ptrs = ptrs.concat(res.ptrs)
+    }
+  })
+  // an empty selection has no views to update from
+  const base = paragraphs.views[0] || paragraphs.source
+  return base.update(ptrs)
+}
+
+
+const api = function (View) {
+
+
+
+  class Paragraphs {
+    constructor(views, source) {
+      this.viewType = 'Paragraphs'
+      this.views = views
+      this.source = source
+    }
+    // is the view not-empty?
+    get found() {
+      return this.views.length > 0
+    }
+    // how many matches we have
+    get length() {
+      return this.views.length
+    }
+
+    text(fmt) {
+      // each view trims its trailing whitespace, so re-separate the paragraphs
+      return this.views.map(m => m.text(fmt)).filter(str => str).join('\n\n')
+    }
+    json() {
+      return concatArr(this.views, 'json')
+    }
+    match(reg) {
+      return concatDoc(this, (view) => view.match(reg))
+    }
+    not(reg) {
+      return concatDoc(this, (view) => view.not(reg))
+    }
+    sentences() {
+      return concatDoc(this, (view) => view)
+    }
+    terms() {
+      return concatDoc(this, (view) => view.terms())
+    }
+    filter(fn) {
+      const res = this.views.filter(p => {
+        return p.some(fn)
+      })
+      return this.update(res)
+    }
+    forEach(fn) {
+      this.views.forEach(p => {
+        p.forEach(fn)
+      })
+      return this
+    }
+    map(fn) {
+      const res = this.views.map(view => {
+        return fn(view)
+      })
+      return this.update(res)
+    }
+    // boolean
+    has(reg) {
+      return this.views.some(view => view.has(reg))
+    }
+    if(reg) {
+      const views = this.views.filter(view => view.has(reg))
+      return this.update(views)
+    }
+    ifNo(reg) {
+      const views = this.views.filter(view => !view.has(reg))
+      return this.update(views)
+    }
+    eq(num) {
+      const p = this.views[num]
+      if (p) {
+        return this.update([p])
+      }
+      return this.update([])
+    }
+    first() {
+      return this.eq(0)
+    }
+    last() {
+      return this.eq(this.length - 1)
+    }
+    debug() {
+      this.views.forEach((view) => {
+        console.log('\n=-=-=-=-')//eslint-disable-line
+        view.debug()
+      })
+    }
+
+    // overloaded - keep Paragraphs class
+    update(views) {
+      const m = new Paragraphs(views, this.source)
+      return m
+    }
+  }
+
+  /** */
+  View.prototype.paragraphs = function () {
+    const hasTwoNewline = /\n\n/
+    const all = []
+    let run = []
+    this.all().forEach(s => {
+      const end = s.lastTerm()
+      run.push(s.ptrs[0])
+      if (hasTwoNewline.test(end.post())) {
+        all.push(run)
+        run = []
+      }
+    })
+    if (run.length > 0) {
+      all.push(run)
+    }
+    const views = all.map(ptr => {
+      return this.update(ptr)
+    })
+    return new Paragraphs(views, this)
+  }
+}
+export default api

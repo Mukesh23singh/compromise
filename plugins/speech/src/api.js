@@ -1,0 +1,33 @@
+const api = function (View) {
+  /** */
+  View.prototype.syllables = function (options = {}) {
+    this.compute('syllables', options)
+    const all = []
+    this.docs.forEach(terms => {
+      let some = []
+      terms.forEach(term => {
+        some = some.concat(term.syllables)
+      })
+      if (some.length > 0) {
+        all.push(some)
+      }
+    })
+    return all
+  }
+  /** */
+  View.prototype.soundsLike = function () {
+    this.compute('soundsLike')
+    const all = []
+    this.docs.forEach(terms => {
+      let some = []
+      terms.forEach(term => {
+        some = some.concat(term.soundsLike)
+      })
+      if (some.length > 0) {
+        all.push(some)
+      }
+    })
+    return all
+  }
+}
+export default api

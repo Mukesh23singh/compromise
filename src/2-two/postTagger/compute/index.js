@@ -1,0 +1,36 @@
+import secondPassRules from '../model/second-pass.js'
+import localCorrections from './local-corrections.js'
+let net = null
+let secondNet = null
+
+// Compile once, then match all corrections against the main sweep's output.
+const secondPass = function (sentences, world) {
+  const { methods } = world
+  secondNet ||= methods.one.buildNet(secondPassRules, world)
+  // Match the whole sentence so rules can include context across commas.
+  // All matches see the same incoming tags; there are no dependent subpasses.
+  const local = localCorrections(sentences)
+  const found = methods.one.bulkMatch(sentences, secondNet, methods)
+  methods.one.bulkTagger(found, sentences, world)
+  local.forEach(([terms, tag, reason]) => methods.one.setTag(terms, tag, world, null, `[post-local] ${reason}`))
+}
+
+// Compiled tag-only passes avoid building match-result Views that are discarded.
+const postTagger = function (view) {
+  const { world } = view
+  const { model, methods } = world
+  net ||= methods.one.buildNet(model.two.matches, world)
+  const sentences = view.docs
+  const clauses = methods.two.quickSplit(sentences)
+  methods.two.leftRight(clauses, model.two.leftRight, world)
+  const found = methods.one.bulkMatch(clauses, net, methods)
+  methods.one.bulkTagger(found, clauses, world)
+  secondPass(sentences, world)
+  view.uncache()
+  view.unfreeze()
+  return view
+}
+
+const tagger = view => view.compute(['freeze', 'lexicon', 'preTagger', 'postTagger', 'unfreeze'])
+
+export default { postTagger, tagger }

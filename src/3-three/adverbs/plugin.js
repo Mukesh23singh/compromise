@@ -1,0 +1,37 @@
+import select from '../_select.js'
+// guard against superlative+comparative forms
+const toRoot = function (adj) {
+  const str = adj.compute('root').text('root')
+  return str
+}
+
+// return the nth elem of a doc
+const api = function (View) {
+
+  class Adverbs extends View {
+    conjugate(n) {
+      return this.getNth(n).map(adv => {
+        const adj = toRoot(adv)
+        return {
+          Adverb: adv.text('normal'),
+          Adjective: adj,
+        }
+      }, [])
+    }
+    json(opts = {}) {
+      const fromAdverb = this.methods.two.transform.adjective.fromAdverb
+      opts.normal = true
+      return this.map(m => {
+        const json = m.toView().json(opts)[0] || {}
+        json.adverb = {
+          adjective: fromAdverb(json.normal)
+        }
+        return json
+      }, [])
+    }
+  }
+  Adverbs.prototype.viewType = 'Adverbs'
+
+  View.prototype.adverbs = select(Adverbs, '#Adv')
+}
+export default { api }

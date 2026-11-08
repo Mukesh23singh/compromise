@@ -1,0 +1,69 @@
+import { matchAt, noAnchors } from '../../_lib.js'
+
+// for greedy checking, we no longer care about the reg.start
+// value, and leaving it can cause failures for anchored greedy
+// matches.  ditto for end-greedy matches: we need an earlier non-
+// ending match to succceed until we get to the actual end.
+const getGreedy = function (state, endReg) {
+  const reg = noAnchors(state.regs[state.r])
+  const start = state.t
+  for (; state.t < state.terms.length; state.t += 1) {
+    // the number of terms we've matched, if we stop here
+    const count = state.t - start + 1
+    //stop for next-reg match - unless we're still under our min
+    if (endReg && matchAt(state, endReg, state.t)) {
+      if (reg.min === undefined || count >= reg.min) {
+        return state.t
+      }
+    }
+    // is it max-length now?
+    if (reg.max !== undefined && count === reg.max) {
+      return state.t
+    }
+    //stop here
+    if (matchAt(state, reg, state.t) === false) {
+      // is it too short?
+      if (reg.min !== undefined && count < reg.min) {
+        return null
+      }
+      return state.t
+    }
+  }
+  // we ran out of terms - did we reach our min?
+  if (reg.min !== undefined && state.t - start + 1 < reg.min) {
+    return null
+  }
+  return state.t
+}
+
+const greedyTo = function (state, nextReg) {
+  let t = state.t
+  //if there's no next one, just go off the end!
+  if (!nextReg) {
+    return state.terms.length
+  }
+  //otherwise, we're looking for the next one
+  for (; t < state.terms.length; t += 1) {
+    if (matchAt(state, nextReg, t) === true) {
+      // console.log(`greedyTo ${state.terms[t].normal}`)
+      return t
+    }
+  }
+  //guess it doesn't exist, then.
+  return null
+}
+
+const isEndGreedy = function (reg, state) {
+  if (reg.end === true && reg.greedy === true) {
+    if (state.start_i + state.t < state.phrase_length - 1) {
+      const tmpReg = { ...reg, end: false }
+      if (matchAt(state, tmpReg, state.t) === true) {
+        // console.log(`endGreedy ${state.terms[state.t].normal}`)
+        return true
+      }
+    }
+  }
+  return false
+}
+
+export { isEndGreedy, greedyTo, getGreedy }

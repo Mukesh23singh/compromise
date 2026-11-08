@@ -1,0 +1,139 @@
+const endS = /s$/
+import parseText from '../numbers/parse/toNumber/index.js'
+
+// just using .toNumber() again may risk an infinite-loop
+const parseNumber = function (m) {
+  const str = m.text('reduced')
+  return parseText(str)
+}
+
+// only when both sides parsed
+const pair = (num, den) => typeof num === 'number' && typeof den === 'number' ? { numerator: num, denominator: den } : null
+
+const mapping = {
+  half: 2,
+  halve: 2,
+  quarter: 4,
+}
+
+const slashForm = function (m) {
+  const str = m.text('reduced')
+  const found = str.match(/^([-+]?[0-9]+(?:\.[0-9]+)?)\/([-+]?[0-9]+)(st|nd|rd|th)?s?$/)
+  return found ? pair(Number(found[1]), Number(found[2])) : null
+}
+
+// parse '4 out of 4'
+const nOutOfN = function (m) {
+  const found = m.match('[<num>#Val+] out of every? [<den>#Val+]')
+  if (!found.found) {
+    return null
+  }
+  let { num, den } = found.groups()
+  if (!num || !den) {
+    return null
+  }
+  num = parseNumber(num)
+  den = parseNumber(den)
+  // '0 out of 4' is allowed
+  if (!den) {
+    return null
+  }
+  return pair(num, den)
+}
+
+// Keep compound singular denominators together: a twenty fifth.
+const compoundOrdinal = (m) => {
+  if (!m.has('^(a|one) #Card+ #Ord$')) {
+    return null
+  }
+  const denominator = parseNumber(m.terms().slice(1))
+  if (typeof denominator === 'number' && denominator > 0) {
+    return { numerator: 1, denominator }
+  }
+  return null
+}
+
+// parse 'five thirds'
+const nOrinalth = function (m) {
+  // the words of 'thirty five fifths' are all tagged as #Fraction
+  const found = m.match('[<num>(#Card|a)+] [<den>(#Frac && !#Card)+]')
+  if (!found.found) {
+    return null
+  }
+  let { num, den } = found.groups()
+  // -- parse numerator---
+  // quick-support for 'a third'
+  if (num.has('a')) {
+    num = 1
+  } else {
+    // abuse the number-parser for 'thirty three'
+    // let tmp = num.clone().unTag('Fraction')
+    // num = tmp.numbers().get()[0]
+    num = parseNumber(num)
+  }
+  // -- parse denominator --
+  // turn 'thirds' into third
+  let str = den.text('reduced')
+  if (endS.test(str)) {
+    str = str.replace(endS, '')
+    den = den.replaceWith(str)
+  }
+  // support 'one half' as '1/2'
+  if (Object.hasOwn(mapping, str)) {
+    den = mapping[str]
+  } else {
+    // dem = dem.numbers().get()[0]
+    den = parseNumber(den)
+  }
+  return pair(num, den)
+}
+
+// implied 1 in '100th of a', 'fifth of a'
+const oneNth = function (m) {
+  const found = m.match('^#Ord$')
+  if (!found.found) {
+    return null
+  }
+  // ensure it's '100th of a '
+  if (m.lookAhead('^of .')) {
+    // let num = found.numbers().get()[0]
+    const num = parseNumber(found)
+    return {
+      numerator: 1,
+      denominator: num,
+    }
+  }
+  return null
+}
+
+// 'half'
+const named = function (m) {
+  const str = m.text('reduced')
+  if (Object.hasOwn(mapping, str)) {
+    return { numerator: 1, denominator: mapping[str] }
+  }
+  return null
+}
+
+const round = n => {
+  const rounded = Math.round(n * 1000) / 1000
+  // don't round 1 millionth down into 0
+  if (rounded === 0 && n !== 0) {
+    return n
+  }
+  return rounded
+}
+
+const parseFraction = function (m) {
+  m = m.clone()
+  const res = named(m) || slashForm(m) || nOutOfN(m) || compoundOrdinal(m) || nOrinalth(m) || oneNth(m) || null
+  if (res !== null) {
+    // do the math
+    if (res.denominator !== 0) {
+      res.decimal = res.numerator / res.denominator
+      res.decimal = round(res.decimal)
+    }
+  }
+  return res
+}
+export default parseFraction

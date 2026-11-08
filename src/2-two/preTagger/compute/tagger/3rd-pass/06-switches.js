@@ -1,0 +1,110 @@
+import fillTags from './_fillTags.js'
+import looksPlural from '../../../methods/looksPlural.js'
+import adhoc from './_adhoc.js'
+import { setTag } from '../_lib.js'
+import { hasAny } from '../../../../_lib.js'
+import { Acronym, Phrasal, SportsTeam, Sing, Actor, Plur, Vb, Inf, Pres, Past, ActorVerb, PersonNoun } from '../../../tagSet/_lib.js'
+const prefix = /^(under|over|mis|re|un|dis|semi)-?/
+
+const checkWord = (term, obj) => {
+  if (!term || !obj) {
+    return null
+  }
+  const str = term.normal || term.implicit
+  let found = null
+  if (Object.hasOwn(obj, str)) {
+    found = obj[str]
+  }
+  return found
+}
+
+const checkTag = (term, obj = {}, tagSet) => {
+  if (!term || !obj) {
+    return null
+  }
+  // Prefer the most specific matching tag; retain insertion order on ties.
+  let found
+  let best = -1
+  for (const tag of term.tags) {
+    if (obj[tag]) {
+      const rank = tagSet[tag] ? tagSet[tag].parents.length : 0
+      if (rank > best) {
+        found = tag
+        best = rank
+      }
+    }
+  }
+  found = obj[found]
+  return found
+}
+
+const pickTag = function (terms, i, clues, model) {
+  if (!clues) {
+    return null
+  }
+  let beforeIndex = i - 1
+  const previousTerm = terms[beforeIndex]
+  // Skip 'also' when looking for clues in the preceding term.
+  if (previousTerm && previousTerm.text === 'also') {
+    beforeIndex = Math.max(0, i - 2)
+  }
+  // In 'we each pay', each separates the subject from its predicate.
+  if (previousTerm?.normal === 'each' && /^(we|they)$/.test(terms[i - 2]?.normal)) {
+    beforeIndex = i - 2
+  }
+  const tagSet = model.one.tagSet
+  // look -> right word, first
+  let tag = checkWord(terms[i + 1], clues.afterWords)
+  // look <- left word, second
+  tag ||= checkWord(terms[beforeIndex], clues.beforeWords)
+  // look <- left tag
+  tag ||= checkTag(terms[beforeIndex], clues.beforeTags, tagSet)
+  // look -> right tag
+  tag ||= checkTag(terms[i + 1], clues.afterTags, tagSet)
+  return tag
+}
+
+// words like 'bob' that can change between two tags
+const doSwitches = function (terms, i, world) {
+  const term = terms[i]
+  if (!term.switch) {
+    return
+  }
+  const model = world.model
+  const { switches, clues } = model.two
+  let str = term.normal || term.implicit || ''
+  // support prefixes for switching words
+  if (prefix.test(str) && !switches[str]) {
+    str = str.replace(prefix, '') // could use some guards, here
+  }
+  const form = term.switch
+  // skip propernouns, acronyms, etc
+  if (hasAny(term, Acronym, Phrasal, SportsTeam)) {
+    return
+  }
+  let tag = pickTag(terms, i, clues[form], model)
+  // lean-harder on some variable forms
+  if (adhoc[form]) {
+    tag = adhoc[form](terms, i) || tag
+  }
+  // Shared noun clues must retain the actor reading.
+  if (form === ActorVerb && tag === Sing) {
+    tag = Actor
+  }
+  // Choosing a lexical reading must retain its inflection.
+  if (form === PersonNoun && tag === Sing && looksPlural(str)) {
+    tag = Plur
+  }
+  // Drew is also a name; only its verbal reading carries past tense.
+  if (str === 'drew' && (tag === Vb || tag === Inf || tag === Pres)) {
+    tag = Past
+  }
+  // did we find anything?
+  if (tag) {
+    // tag it
+    setTag([term], tag, world, `3-[switch] (${form})`)
+    // add plural/singular etc.
+    fillTags(terms, i, model)
+  }
+}
+export default doSwitches

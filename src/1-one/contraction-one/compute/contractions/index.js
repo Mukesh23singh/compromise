@@ -1,0 +1,150 @@
+import contractionDebug from '../../../../API/debug/contractions-debug.js'
+import splice from './_splice.js'
+import apostropheD from './apostrophe-d.js'
+import apostropheT from './apostrophe-t.js'
+import doubled from './double.js'
+import french from './french.js'
+import numberRange from './number-range.js'
+import numberUnit from './number-unit.js'
+
+const byApostrophe = /'/
+const numDash = /^[0-9][^-–—]*[-–—].*?[0-9]/
+
+// poor-mans reindexing of this sentence only
+const reIndex = function (terms) {
+  terms.forEach((t, i) => {
+    if (t.index) {
+      t.index[1] = i
+    }
+  })
+}
+
+const byEnd = {
+  // ain't
+  t: apostropheT,
+  // how'd
+  d: apostropheD,
+}
+
+const byStart = {
+  // j'aime
+  j: french.preJ,
+  // l'amour
+  l: french.preL,
+  // d'amerique
+  d: french.preD,
+}
+
+// pull-apart known contractions from model
+const knownOnes = function (list, term, before, after) {
+  for (let i = 0; i < list.length; i += 1) {
+    const o = list[i]
+    // look for word-word match (cannot-> [can, not])
+    if (o.word === term.normal) {
+      return o.out
+    }
+    // look for after-match ('re -> [_, are])
+    else if (after !== null && after === o.after) {
+      return [before].concat(o.out)
+    }
+    // look for before-match (l' -> [le, _])
+    else if (before !== null && before === o.before && after && after.length > 2) {
+      return o.out.concat(after)
+      // return [o.out, after] //typeof o.out === 'string' ? [o.out, after] : o.out(terms, i)
+    }
+  }
+  return null
+}
+
+// turn the words into terms, and put them where the contraction was
+const expand = function (words, view, document, n, i) {
+  contractionDebug(document[n][i], words)
+  const doc = view.fromText(words.join(' '))
+  doc.compute(['id', 'alias'])
+  words = doc.docs[0]
+  splice(document, [n, i], words)
+  return words
+}
+
+// there's is usually [there, is]
+// but can be 'there has' for 'there has (..) been'
+const thereHas = function (terms, i) {
+  for (let k = i + 1; k < 5; k += 1) {
+    if (!terms[k]) {
+      break
+    }
+    if (terms[k].normal === 'been') {
+      return ['there', 'has']
+    }
+  }
+  return ['there', 'is']
+}
+
+//really easy ones
+const contractions = view => {
+  const { world, document } = view
+  const { model, methods } = world
+  const list = model.one.contractions || []
+  // let units = new Set(model.one.units || [])
+  // each sentence
+  document.forEach((terms, n) => {
+    const len = terms.length
+    // loop through terms backwards
+    for (let i = terms.length - 1; i >= 0; i -= 1) {
+      // already expanded - this runs on the whole document, and must be re-runnable
+      if (terms[i].implicit) {
+        continue
+      }
+      let before = null
+      let after = null
+      if (byApostrophe.test(terms[i].normal)) {
+        const res = terms[i].normal.split(byApostrophe)
+        before = res[0]
+        after = res[1]
+      }
+      // wouldn't've, then any known-ones, like 'dunno'
+      let words = doubled(terms, i) || knownOnes(list, terms[i], before, after)
+      // ['foo', 's']
+      if (!words && Object.hasOwn(byEnd, after)) {
+        words = byEnd[after](terms, i, world)
+      }
+      // ['j', 'aime']
+      if (!words && Object.hasOwn(byStart, before)) {
+        words = byStart[before](terms, i)
+      }
+      // 'there is' vs 'there has'
+      if (before === 'there' && after === 's') {
+        words = thereHas(terms, i)
+      }
+      // actually insert the new terms
+      if (words) {
+        expand(words, view, document, n, i)
+        continue
+      }
+      // '44-2' has special care
+      if (numDash.test(terms[i].normal)) {
+        words = numberRange(terms, i)
+        if (words) {
+          words = expand(words, view, document, n, i)
+          methods.one.setTag(words, 'NumberRange', world) //add custom tag
+          // is it a time-range, like '5-9pm'
+          if (words[2] && words[2].tags.has('Time')) {
+            methods.one.setTag([words[0]], 'Time', world, null, 'time-range')
+          }
+        }
+        continue
+      }
+      // split-apart '4km'
+      words = numberUnit(terms, i, world)
+      if (words) {
+        words = expand(words, view, document, n, i)
+        methods.one.setTag([words[1]], 'Unit', world, null, 'contraction-unit')
+      }
+    }
+    // new terms shift the indexes of any terms after them
+    if (terms.length !== len) {
+      reIndex(terms)
+    }
+  })
+}
+export default contractions

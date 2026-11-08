@@ -1,76 +1,33 @@
-import commonjs from '@rollup/plugin-commonjs'
-import json from '@rollup/plugin-json'
-import resolve from '@rollup/plugin-node-resolve'
-import { terser } from 'rollup-plugin-terser'
-import babel from 'rollup-plugin-babel'
+import terser from '@rollup/plugin-terser'
 import sizeCheck from 'rollup-plugin-filesize-check'
-const name = 'compromise-html'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
 
-import { version } from './package.json'
-const banner = `/* ${name} ${version} MIT */`
-
-export default [
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.mjs`,
-        format: 'esm',
-        banner: banner,
-      },
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      sizeCheck(),
-    ],
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.js`,
-        format: 'umd',
-        sourcemap: true,
-        name: 'compromiseHtml',
-        banner: banner,
-      },
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      sizeCheck(),
-    ],
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.min.js`,
-        format: 'umd',
-        name: 'compromiseHtml',
-      },
-    ],
-    plugins: [
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      terser(),
-      sizeCheck(),
-    ],
-  },
-]
+export default {
+  input: 'src/plugin.js',
+  plugins: [nodeResolve()],
+  output: [
+    {
+      file: 'builds/compromise-html.cjs',
+      format: 'umd',
+      name: 'compromiseHtml',
+    },
+    {
+      file: 'builds/compromise-html.mjs',
+      format: 'esm',
+      plugins: [terser()],
+    },
+    {
+      file: 'builds/compromise-html.min.js',
+      format: 'umd',
+      name: 'compromiseHtml',
+      plugins: [
+        terser(),
+        sizeCheck({
+          expect: 222, // Includes HTML parsing, serialization, and optional formatting.
+          warn: 5,
+          throw: 10,
+        }),
+      ],
+    },
+  ],
+}

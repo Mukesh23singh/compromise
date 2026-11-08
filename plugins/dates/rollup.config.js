@@ -1,91 +1,34 @@
-import commonjs from '@rollup/plugin-commonjs'
-import json from '@rollup/plugin-json'
-import resolve from '@rollup/plugin-node-resolve'
-import { terser } from 'rollup-plugin-terser'
-import babel from 'rollup-plugin-babel'
+import terser from '@rollup/plugin-terser'
 import sizeCheck from 'rollup-plugin-filesize-check'
-const name = 'compromise-dates'
-import alias from '@rollup/plugin-alias'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
 
-import { version } from './package.json'
-const banner = `/* ${name} ${version} MIT */`
-
-export default [
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.mjs`,
-        format: 'esm',
-        banner: banner,
-      },
-    ],
-    plugins: [
-      alias({
-        entries: [
-          { find: 'spacetime', replacement: 'spacetime/builds/spacetime.js' },
-          { find: 'spacetime-holiday', replacement: 'spacetime-holiday/builds/spacetime-holiday.js' },
-        ],
-      }),
-      resolve(),
-      json(),
-      commonjs(),
-      terser(),
-      sizeCheck(),
-    ],
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.js`,
-        format: 'umd',
-        name: 'compromiseDates',
-        banner: banner,
-      },
-    ],
-    plugins: [
-      alias({
-        entries: [
-          { find: 'spacetime', replacement: 'spacetime/builds/spacetime.js' },
-          { find: 'spacetime-holiday', replacement: 'spacetime-holiday/builds/spacetime-holiday.js' },
-        ],
-      }),
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      sizeCheck(),
-    ],
-  },
-  {
-    input: 'src/index.js',
-    output: [
-      {
-        file: `builds/${name}.min.js`,
-        format: 'umd',
-        name: 'compromiseDates',
-      },
-    ],
-    plugins: [
-      alias({
-        entries: [
-          { find: 'spacetime', replacement: 'spacetime/builds/spacetime.js' },
-          { find: 'spacetime-holiday', replacement: 'spacetime-holiday/builds/spacetime-holiday.js' },
-        ],
-      }),
-      resolve(),
-      json(),
-      commonjs(),
-      babel({
-        babelrc: false,
-        presets: ['@babel/preset-env'],
-      }),
-      terser(),
-      sizeCheck(),
-    ],
-  },
-]
+export default {
+  input: 'src/plugin.js',
+  plugins: [nodeResolve()],
+  output: [
+    {
+      file: 'builds/compromise-dates.cjs',
+      format: 'umd',
+      name: 'compromiseDates',
+      plugins: [],
+    },
+    {
+      file: 'builds/compromise-dates.min.js',
+      format: 'umd',
+      name: 'compromiseDates',
+      plugins: [
+        terser({ keep_classnames: true }),
+        sizeCheck({
+          expect: 141,
+          warn: 5, // acceptable (+/-)
+          throw: 10, // unacceptable (+/-)
+        }),
+      ],
+    },
+    {
+      file: 'builds/compromise-dates.mjs',
+      format: 'esm',
+      plugins: [terser({ keep_classnames: true })],
+    },
+  ],
+}

@@ -1,14 +1,8 @@
-if (typeof process !== undefined && typeof module !== undefined) {
-  let nlp
-  if (process.env.TESTENV === 'prod') {
-    nlp = require('../../../')
-    nlp.extend(require(`../`))
-    nlp.extend(require(`../../numbers/`))
-  } else {
-    nlp = require('../../../src')
-    nlp.extend(require(`../src`))
-    nlp.extend(require(`../../numbers/src`))
-  }
+import nlp from '../../../tests/03-three/lib.js'
 
-  module.exports = nlp
-}
+const production = process.env.TESTENV === 'prod'
+const path = production ? '../builds/compromise-dates.mjs' : '../src/plugin.js'
+const { default: plugin } = await import(path)
+nlp.plugin(plugin)
+
+export default nlp

@@ -1,0 +1,43 @@
+import getRoot from './root.js'
+import getAdverbs from './adverbs.js'
+
+const getAuxiliary = function (vb, root) {
+  const parts = vb.splitBefore(root)
+  if (parts.length <= 1) {
+    return vb.none()
+  }
+  let aux = parts.eq(0)
+  aux = aux.not('(#Adv|#Neg|#Prefix)')
+  return aux
+}
+
+// pull-apart phrasal-verb into verb-particle
+const getPhrasal = function (root) {
+  if (!root.has('(#Particle|#PhrV)')) {
+    return {
+      verb: root.none(),
+      particle: root.none()
+    }
+  }
+  const particle = root.match('#Particle$')
+  return {
+    verb: root.not(particle),
+    particle: particle,
+  }
+}
+
+const parseVerb = function (view) {
+  const vb = view.clone()
+  vb.contractions().expand()
+  const root = getRoot(vb)
+  const res = {
+    root: root,
+    prefix: vb.match('#Prefix'),
+    adverbs: getAdverbs(vb, root),
+    auxiliary: getAuxiliary(vb, root),
+    negative: vb.match('#Neg'),
+    phrasal: getPhrasal(root),
+  }
+  return res
+}
+export default parseVerb

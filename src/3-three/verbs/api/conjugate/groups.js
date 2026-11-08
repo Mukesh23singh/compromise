@@ -1,0 +1,56 @@
+import parseVerb from '../parse/index.js'
+import getGrammar from '../parse/grammar/index.js'
+import readAuxiliary from '../parse/auxiliary.js'
+import { SimplePres, SimplePast, SimpleFut } from '../parse/grammar/forms.js'
+
+// Snapshot coordination before any edit changes tags or term positions. Only
+// adjacent, compatible roots can inherit an auxiliary; a new subject, object,
+// comma, sentence boundary, or explicit auxiliary starts an independent phrase.
+const groups = function (verbs, finite = false) {
+  const entries = verbs.map(vb => {
+    const parsed = parseVerb(vb)
+    return { vb, parsed, root: vb.match(parsed.root).harden() }
+  }, [])
+  entries.forEach((entry, i) => {
+    const previous = entries[i - 1]
+    if (!previous || entry.parsed.auxiliary.found) return
+    const head = previous.head || previous
+    if (!finite && !head.parsed.auxiliary.found) {
+      return
+    }
+    const info = getGrammar(head.vb, head.parsed)
+    const bare = finite && !head.parsed.auxiliary.found && !info.copula && (info.form === SimplePres || info.form === SimplePast)
+    const doSupport = finite && head.parsed.auxiliary.has('^(do|does|did)$')
+    if (!head.parsed.auxiliary.found && !bare) return
+    if (info.isInfinitive) return
+    const chain = readAuxiliary(head.parsed, info.form)
+    if ((!chain && info.form !== SimpleFut && !bare && !doSupport) || (chain && chain.prospective)) return
+    head.chain = chain
+    head.form = info.form
+    const root = entry.parsed.root
+    const headRoot = head.parsed.root
+    let compatible = headRoot.has('#Inf') && root.has('#Inf')
+    if (bare && headRoot.has('#Pres')) {
+      compatible = root.has('#Pres')
+    }
+    if (headRoot.has('(#Past|#Participle)')) compatible = root.has('(#Past|#Participle)')
+    if (headRoot.has('#Ger')) compatible = root.has('#Ger')
+    if (!compatible || previous.vb.has('@hasComma$')) return
+    const next = previous.vb.growRight('(and|or) #Adv+? #Verb+ #Particle?')
+    if (next.match(entry.vb).wordCount() !== entry.vb.wordCount()) return
+    entry.head = head
+  })
+  return entries
+}
+
+// Sentence converters traditionally handle the first phrase separately. Keep
+// its shared-auxiliary dependents in that first conversion too.
+export const firstGroup = function (verbs) {
+  if (verbs.length < 2) return verbs
+  const entries = groups(verbs)
+  let count = 1
+  while (entries[count] && entries[count].head === entries[0]) count += 1
+  return verbs.slice(0, count)
+}
+
+export default groups

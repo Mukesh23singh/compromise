@@ -1,0 +1,143 @@
+import parseTime from '../../one/01-tokenize/03-time.js'
+
+const dayNames = {
+  mon: 'monday',
+  tue: 'tuesday',
+  tues: 'tuesday',
+  wed: 'wednesday',
+  thu: 'thursday',
+  fri: 'friday',
+  sat: 'saturday',
+  sun: 'sunday',
+  monday: 'monday',
+  tuesday: 'tuesday',
+  wednesday: 'wednesday',
+  thursday: 'thursday',
+  friday: 'friday',
+  saturday: 'saturday',
+  sunday: 'sunday',
+}
+// 'any tuesday' vs 'every tuesday'
+const parseLogic = function (m) {
+  if (m.match('(every|each)').found) {
+    return 'AND'
+  }
+  if (m.match('(any|a)').found) {
+    return 'OR'
+  }
+  return null
+}
+
+// parse repeating dates, like 'every week'
+const parseIntervals = function (doc, context) {
+  // 'every week'
+  let m = doc.match('[<logic>(every|any|each)] [<skip>other?] [<unit>#Duration] (starting|beginning|commencing)?')
+  if (m.found) {
+    const repeat = { interval: {} }
+    const unit = m.groups('unit').text('reduced')
+    repeat.interval[unit] = 1
+    repeat.choose = parseLogic(m)
+    // 'every other week'
+    if (m.groups('skip').found) {
+      repeat.interval[unit] = 2
+    }
+    doc = doc.remove(m)
+    return { repeat: repeat }
+  }
+
+  // 'every two weeks'
+  m = doc.match('[<logic>(every|any|each)] [<num>#Value] [<unit>#Duration] (starting|beginning|commencing)?')
+  if (m.found) {
+    const repeat = { interval: {} }
+    const units = m.groups('unit')
+    units.nouns().toSingular()
+    const unit = units.text('reduced')
+    repeat.interval[unit] = m.groups('num').numbers().get()[0]
+    repeat.choose = parseLogic(m)
+    doc = doc.remove(m)
+    return { repeat: repeat }
+  }
+
+  // 'every friday', 'every monday and wednesday'
+  m = doc.match('[<logic>(every|any|each|a)] [<skip>other?] [<day>(#WeekDay|and|or|&)+] (starting|beginning|commencing)?')
+  if (m.found) {
+    const repeat = { interval: { day: 1 }, filter: { weekDays: {} } }
+    const days = m.groups('day').match('#WeekDay').map(d => dayNames[d.text('reduced')]).filter(Boolean)
+    if (days.length) {
+      days.forEach(str => {
+        repeat.filter.weekDays[str] = true
+      })
+      repeat.choose = parseLogic(m)
+      doc = doc.remove(m)
+      return { repeat: repeat }
+    }
+  }
+
+  // 'every weekday'
+  m = doc.match(
+    '[<logic>(every|any|each|a)] [<day>(weekday|week day|weekend|weekend day)] (starting|beginning|commencing)?'
+  )
+  if (m.found) {
+    const repeat = { interval: { day: 1 }, filter: { weekDays: {} } }
+    const day = m.groups('day')
+    if (day.has('(weekday|week day)')) {
+      repeat.filter.weekDays = {
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: true,
+      }
+    } else if (day.has('(weekend|weekend day)')) {
+      repeat.filter.weekDays = {
+        saturday: true,
+        sunday: true,
+      }
+    }
+    repeat.choose = parseLogic(m)
+    doc = doc.remove(m)
+    return { repeat: repeat }
+  }
+
+  // 'weekends in july'
+  m = doc.match('(weekends|weekdays)')
+  if (m.found) {
+    const repeat = { interval: { day: 1 }, filter: { weekDays: {} }, choose: 'AND' }
+    if (m.has('weekends')) {
+      repeat.filter.weekDays = { saturday: true, sunday: true }
+    } else {
+      repeat.filter.weekDays = {
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: true,
+      }
+    }
+    doc = doc.remove(m)
+    return { repeat: repeat }
+  }
+
+  // mondays, 'tuesdays and thursdays'
+  m = doc.match(
+    '[<day>(mondays|tuesdays|wednesdays|thursdays|fridays|saturdays|sundays|and|or|&)+] (at|near|after)? [<time>#Time+?]'
+  )
+  if (m.found) {
+    const repeat = { interval: { day: 1 }, filter: { weekDays: {} } }
+    const days = m.groups('day').match('#Plural').map(d => dayNames[d.text('reduced').replace(/s$/, '')]).filter(Boolean)
+    if (days.length) {
+      days.forEach(str => {
+        repeat.filter.weekDays[str] = true
+      })
+      repeat.choose = 'OR'
+      const time = m.groups('time')
+      if (time.found) {
+        repeat.time = parseTime(time, context).result
+      }
+      doc = doc.remove(m)
+      return { repeat: repeat }
+    }
+  }
+  return null
+}
+export default parseIntervals

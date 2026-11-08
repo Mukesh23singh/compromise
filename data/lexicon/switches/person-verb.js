@@ -1,0 +1,39 @@
+// words that can be a verb or a person's name
+export default [
+  // clues: [person, verb],
+  // fallback: 'PresentTense', //maybe?
+  'biff',
+  'bill',
+  'blaze',
+  'blossom',
+  'bob',
+  'buck',
+  'chase',
+  'chuck',
+  'drew', //past-tense
+  'foster',
+  'grace',
+  'grant',
+  'jack',
+  'lance',
+  'mack',
+  'mark',
+  'marshal',
+  'nick',
+  'ollie',
+  'pat',
+  'peg',
+  'pierce',
+  'rob',
+  'spike',
+  'stew',
+  'sue',
+  'skip',
+  'wade',
+  // 'hope',
+  // 'trace',
+  // 'will',
+  // 'sung'
+  // 'may'
+  // 'peter',
+]

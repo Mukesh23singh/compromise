@@ -1,0 +1,151 @@
+import parseDate from '../one/index.js'
+import reverseMaybe from './_reverse.js'
+import Unit from '../one/units/Unit.js'
+
+const punt = function (unit, context) {
+  unit = unit.applyShift(context.punt)
+  return unit
+}
+
+export default [
+  {
+    // 'from A to B'
+    match: 'from? [<from>.+] (to|until|upto|through|thru) [<to>.+]',
+    desc: 'from A to B',
+    parse: (m, context) => {
+      let from = m.groups('from')
+      let to = m.groups('to')
+      from = parseDate(from, context)
+      to = parseDate(to, context)
+      if (from && to) {
+        let obj = {
+          start: from,
+          // 'to october 1 at 2am' ends at that time, not the end of the day
+          end: to.setTime ? to : to.end(),
+        }
+        obj = reverseMaybe(obj)
+        return obj
+      }
+      return null
+    },
+  },
+
+  {
+    // 'before june'
+    match: '^due? (by|before) [.+]',
+    desc: 'before june',
+    parse: (m, context) => {
+      m = m.group(0)
+      const unit = parseDate(m, context)
+      if (unit) {
+        // 'before 5pm' - from the start of the day, until the time
+        if (unit.unit === 'millisecond' || unit.unit === 'hour' || unit.unit === 'minute') {
+          const dayStart = new Unit(context.today, null, context).start()
+          return {
+            start: dayStart,
+            end: unit,
+            unit: 'time',
+          }
+        }
+        let start = new Unit(context.today, null, context)
+        if (start.d.isBefore(unit.d) === false) {
+          start = unit.clone().applyShift({ weeks: -2 })
+        }
+        // end the night before
+        const end = unit.clone().applyShift({ day: -1 })
+        return {
+          start: start,
+          end: end.end(),
+        }
+      }
+      return null
+    },
+  },
+
+  {
+    // 'in june'
+    match: '^(on|in|at|@|during) [.+]',
+    desc: 'in june',
+    parse: (m, context) => {
+      m = m.group(0)
+      const unit = parseDate(m, context)
+      if (unit) {
+        return { start: unit, end: unit.clone().end(), unit: unit.unit }
+      }
+      return null
+    },
+  },
+  {
+    // 'after june'
+    match: '^(after|following) [.+]',
+    desc: 'after june',
+    parse: (m, context) => {
+      m = m.group(0)
+      let unit = parseDate(m, context)
+      if (unit) {
+        unit = unit.after()
+        return {
+          start: unit.clone(),
+          end: punt(unit.clone(), context),
+        }
+      }
+      return null
+    },
+  },
+  {
+    // 'middle of'
+    match: '^(middle|center|midpoint) of [.+]',
+    desc: 'middle of',
+    parse: (m, context) => {
+      m = m.group(0)
+      const unit = parseDate(m, context)
+      if (unit) {
+        const start = unit.clone().middle()
+        const end = unit.beforeEnd()
+        return {
+          start: start,
+          end: end,
+        }
+      }
+      return null
+    },
+  },
+  {
+    // 'tuesday after 5pm'
+    match: '.+ after #Time+$',
+    desc: 'tuesday after 5pm',
+    parse: (m, context) => {
+      const unit = parseDate(m, context)
+      if (unit) {
+        const start = unit.clone()
+        const end = unit.end()
+        return {
+          start: start,
+          end: end,
+          unit: 'time',
+        }
+      }
+      return null
+    },
+  },
+  {
+    // 'tuesday before noon'
+    match: '.+ before #Time+$',
+    desc: 'tuesday before noon',
+    parse: (m, context) => {
+      const unit = parseDate(m, context)
+      if (unit) {
+        const end = unit.clone()
+        const start = unit.start()
+        if (unit) {
+          return {
+            start: start,
+            end: end,
+            unit: 'time',
+          }
+        }
+      }
+      return null
+    },
+  },
+]
